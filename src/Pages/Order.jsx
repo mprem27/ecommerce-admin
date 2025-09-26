@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { BackendURL, currency } from '../App';
 import { Trash2 } from "lucide-react";
@@ -8,92 +8,117 @@ const statusOptions = ["Pending", "Processing", "In Transit", "Delivered", "Canc
 
 const Order = ({ token }) => {
 
-    const [orders, setOrders] = useState([])
-    const featchOrder = async () => {
+    const [orders, setOrders] = useState([]);
+
+    const fetchOrder = async () => {
         try {
             const response = await axios.post(BackendURL + "/api/order/allOrders", {}, { headers: { token } });
             if (response.data.success) {
                 setOrders(response.data.orders);
-            }
-            else {
+            } else {
                 toast.error(response.data.message);
             }
         } catch (error) {
-            console.log("Error getting in orders:", error)
+            console.log("Error getting in orders:", error);
             toast.error(error.message);
         }
-    }
+    };
 
     const updateOrder = async (orderId, status) => {
         try {
             const response = await axios.post(BackendURL + "/api/order/updateOrder", { orderId, status }, { headers: { token } });
             if (response.data.success) {
                 toast.success(response.data.message);
-                featchOrder();
+                fetchOrder();
             } else {
                 toast.error(response.data.message);
             }
         } catch (error) {
-            console.log("Error getting in orderupdate:", error)
+            console.log("Error getting in order update:", error);
             toast.error(error.message);
         }
     };
+
     const onChangeHandler = (orderId, newStatus) => {
         updateOrder(orderId, newStatus);
     };
+
     useEffect(() => {
-        featchOrder();
-    }, [])
+        fetchOrder();
+    }, []);
+
     return (
-        <div className='p-6 bg-white shadow-lg rounded-xl max-w-[90%] ml-auto mt-2 '>
-            <p className='text-xl font-bold mb-6 text-gray-800 border-b text-center pb-2 '>All Orders List</p>
-            <div className='flex flex-col gap-2'>
-                <div className='hidden md:grid grid-cols-[1fr_2fr_1fr_1fr_1fr] items-center py-2 px-2 border text-center rounded border-gray-300 bg-blue-100 text-sm'>
-                    <b>Order ID</b>
-                    <b>User ID</b>
-                    <b>Date</b>
-                    <b>Status</b>
-                    <b>Amount</b>
+        <div className='p-6 ml-auto min-h-screen w-[90%]'>
+            <div className='max-w-6xl mx-auto w-full'>
+                <h1 className='text-3xl font-extrabold mb-8 text-center text-gray-800'>All Orders List</h1>
 
-                </div>
-
-                {
-                    orders.length > 0 ?
+                <div className='flex flex-col gap-6 '>
+                    {orders.length > 0 ? (
                         orders.map((item, index) => (
-                            <div key={index} className='grid grid-cols-[1fr_2fr_1fr_1fr_1fr] justify-center items-center py-2 px-2 border text-center rounded border-gray-300 bg-blue-100 text-sm'>
-                                <div className='col-span-1 flex flex-col items-start'>
-                                    <span className='text-gray-700 font-semibold'>
-                                        {item._id.slice(0, 15) + "..."}
-                                    </span>
-                                    <span className='text-xs text-gray-500 mt-0.5'>
-                                        Status: {(item.status || 'Pending')}
-                                    </span>
-                                </div>
-                                <b className='col-span-1 text-gray-700'>{item.userId.slice(0, 20) + "..."}</b>
-                                <b className='col-span-1 text-gray-600'>{item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}</b>
+                            <div key={index} className='bg-white rounded-xl shadow-lg p-6 border border-gray-200 w-full flex flex-col gap-4'>
+                                <div className='flex justify-between w-full items-start'>
+                                    <span className='font-semibold text-gray-800 text-lg'>Order ID: {item._id}</span>
 
-                                <select className='text-sm p-1 border rounded-md shadow-sm  focus:border-blue-500' value={item.status} onChange={(e) => onChangeHandler(item._id, e.target.value)}>
-                                    {statusOptions.map((status) => (
-                                        <option key={status} value={status.toLowerCase()}>{status}</option>
-                                    ))}
-                                </select>
-                                <b className='col-span-1 font-bold text-gray-800'>{currency}{item.amount}</b>
-                                {/* <div className='flex items-center justify-center'>
-                                        <button 
-                                            onClick={() => removeProduct(item._id)} 
-                                            className='text-gray-500 hover:text-red-600 transition-colors duration-200'
-                                            title="Delete Order"
+                                    <div className='flex flex-col items-end'>
+                                        {/* Status Dropdown */}
+                                        <select
+                                            className='text-sm px-3 py-1 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white'
+                                            value={item.status}
+                                            onChange={(e) => onChangeHandler(item._id, e.target.value)}
                                         >
-                                            <Trash2 size={20} strokeWidth={2} />
-                                        </button>
-                                    </div> */}
-                            </div>
-                        )) :
-                        <b className=' text-2xl font-semibold text-center mt-3'>No Products Available</b>
-                }
-            </div>
+                                            {statusOptions.map((status) => (
+                                                <option key={status} value={status.toLowerCase()}>{status}</option>
+                                            ))}
+                                        </select>
 
+                                        
+                                    </div>
+                                </div>
+
+                                {/* Product Items */}
+                                <div className='flex gap-6 w-full'>
+                                    {/* Left side: Products */}
+                                    <div className='flex flex-col gap-4 flex-1'>
+                                        {item.items.map((orderItem, itemIndex) => (
+                                            <div key={itemIndex} className='flex justify-start items-start gap-4 p-4 border border-gray-200 rounded-lg w-full'>
+                                                <img src={orderItem.image[0]} alt={orderItem.name} className='w-32 h-32 object-cover rounded-md flex-shrink-0' />
+                                                <div className='flex flex-col gap-1'>
+                                                    <span className='font-semibold text-gray-800 text-lg'>{orderItem.name} x{orderItem.quantity}</span>
+                                                    <span className='text-gray-500 text-xs'>User ID: {item.userId}</span>
+                                                    <span className='text-gray-800 font-bold text-lg'>{currency}{orderItem.price * orderItem.quantity}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                  
+                                    <div className='mt-2 text-sm text-gray-600 items-center justify-center w-64 flex-shrink-0'>
+                                        <p className='font-semibold'>{item.address?.firstName} {item.address?.lastName}</p>
+                                        <p>{item.address?.street}</p>
+                                        <p>{item.address?.locality}</p>
+                                        <p>{item.address?.city}, {item.address?.state}, {item.address?.country}</p>
+                                        <p>{item.address?.zipcode}</p>
+                                        <p>{item.address?.phone}</p>
+                                        <p>{item.address?.alternatephone}</p>
+                                    </div>
+                                </div>
+
+                                {/* Total Amount at bottom-right */}
+                                <div className='flex justify-end mt-2'>
+                                    <span className='font-bold text-xl text-gray-800'>Total: {currency}{item.amount}</span>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className='text-center mt-10'>
+                            <b className='text-2xl font-semibold text-gray-600'>No Orders Available</b>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
-    )
+
+    );
 }
-export default Order
+
+export default Order;
